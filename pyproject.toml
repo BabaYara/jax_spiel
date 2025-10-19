@@ -1,0 +1,15 @@
+[project]
+name = "jax-spiel"
+version = "0.0.1"
+description = "JAX-first reimplementation of OpenSpiel primitives"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "jax",
+    "jaxlib",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+]
