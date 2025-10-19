@@ -8,6 +8,7 @@ from .tensor_game import (
     best_response,
     expected_payoff,
     joint_action_payoff,
+    nash_conv,
     matching_pennies,
 )
 
@@ -19,5 +20,6 @@ __all__ = [
     "best_response",
     "expected_payoff",
     "joint_action_payoff",
+    "nash_conv",
     "matching_pennies",
 ]
