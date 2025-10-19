@@ -92,6 +92,34 @@ def test_best_response_is_pure_strategy():
     assert jnp.array_equal(response, jax.nn.one_hot(jnp.argmax(response), response.shape[0]))
 
 
+def test_nash_conv_is_zero_for_matching_pennies_equilibrium():
+    game = tensor_game.matching_pennies()
+    policies = jnp.array([[0.5, 0.5], [0.5, 0.5]])
+
+    conv = tensor_game.nash_conv(game, policies)
+
+    assert jnp.isclose(conv, 0.0)
+
+
+def test_nash_conv_detects_exploitable_profile():
+    game = tensor_game.matching_pennies()
+    policies = jnp.array([[1.0, 0.0], [1.0, 0.0]])
+
+    conv = tensor_game.nash_conv(game, policies)
+
+    assert jnp.isclose(conv, 2.0)
+
+
+def test_nash_conv_is_jittable():
+    game = tensor_game.matching_pennies()
+    policies = jnp.array([[0.2, 0.8], [0.7, 0.3]])
+
+    jit_fn = jax.jit(lambda p: tensor_game.nash_conv(game, p))
+    conv = jit_fn(policies)
+
+    assert jnp.isclose(conv, tensor_game.nash_conv(game, policies))
+
+
 def test_tensor_game_metadata():
     game = tensor_game.matching_pennies()
 

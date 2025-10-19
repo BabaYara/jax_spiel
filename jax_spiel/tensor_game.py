@@ -136,6 +136,32 @@ def best_response(game: TensorGame, opponent_policy: jnp.ndarray, player: int) -
     return jax.nn.one_hot(best_action, num_actions)
 
 
+def nash_conv(game: TensorGame, joint_policy: Tuple[jnp.ndarray, jnp.ndarray] | jnp.ndarray) -> jnp.ndarray:
+    """Computes the NashConv exploitability metric for two-player games."""
+
+    try:
+        player0_policy, player1_policy = joint_policy
+    except TypeError as exc:  # pragma: no cover - defensive guard
+        raise ValueError("joint_policy must be an iterable of length 2") from exc
+
+    player0_policy = jnp.asarray(player0_policy)
+    player1_policy = jnp.asarray(player1_policy)
+
+    num_actions0, num_actions1 = game.num_actions
+    _validate_policy(player0_policy, num_actions0, "player0_policy")
+    _validate_policy(player1_policy, num_actions1, "player1_policy")
+
+    expected = expected_payoff(game, player0_policy, player1_policy)
+
+    br0 = best_response(game, player1_policy, player=0)
+    br1 = best_response(game, player0_policy, player=1)
+
+    br0_value = expected_payoff(game, br0, player1_policy)[0]
+    br1_value = expected_payoff(game, player0_policy, br1)[1]
+
+    return (br0_value - expected[0]) + (br1_value - expected[1])
+
+
 __all__ = [
     "SIMULTANEOUS_PLAYER",
     "TERMINAL_PLAYER",
@@ -145,4 +171,5 @@ __all__ = [
     "expected_payoff",
     "joint_action_payoff",
     "best_response",
+    "nash_conv",
 ]
