@@ -5,6 +5,53 @@ import pytest
 from jax_spiel import tensor_game
 
 
+def test_tensor_state_initial_properties():
+    game = tensor_game.matching_pennies()
+    state = tensor_game.TensorState(game=game)
+
+    assert not state.is_terminal
+    assert state.current_player == tensor_game.SIMULTANEOUS_PLAYER
+
+    legal_actions_player0 = state.legal_actions(player=0)
+    legal_actions_player1 = state.legal_actions(player=1)
+
+    assert jnp.array_equal(legal_actions_player0, jnp.array([0, 1], dtype=jnp.int32))
+    assert jnp.array_equal(legal_actions_player1, jnp.array([0, 1], dtype=jnp.int32))
+    assert jnp.allclose(state.returns(), jnp.zeros(2))
+
+
+def test_tensor_state_apply_joint_action_and_returns():
+    game = tensor_game.matching_pennies()
+    state = tensor_game.TensorState(game=game)
+
+    next_state = state.apply_joint_action((0, 1))
+
+    assert next_state.is_terminal
+    assert next_state.current_player == tensor_game.TERMINAL_PLAYER
+    assert jnp.array_equal(next_state.returns(), jnp.array([1.0, -1.0]))
+
+    with pytest.raises(ValueError):
+        next_state.apply_joint_action((0, 0))
+
+
+def test_tensor_state_rejects_illegal_actions():
+    game = tensor_game.matching_pennies()
+    state = tensor_game.TensorState(game=game)
+
+    with pytest.raises(ValueError):
+        state.apply_joint_action((0, 5))
+
+
+def test_joint_action_payoff_is_jittable():
+    game = tensor_game.matching_pennies()
+    joint_action = jnp.array([1, 0], dtype=jnp.int32)
+
+    jit_fn = jax.jit(lambda a: tensor_game.joint_action_payoff(game, a))
+    payoff = jit_fn(joint_action)
+
+    assert jnp.array_equal(payoff, jnp.array([1.0, -1.0]))
+
+
 def test_matching_pennies_expected_payoff_zero_sum():
     game = tensor_game.matching_pennies()
     uniform = jnp.array([0.5, 0.5])
