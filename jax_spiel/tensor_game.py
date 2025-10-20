@@ -7,6 +7,7 @@ from typing import Tuple
 
 import jax
 import jax.numpy as jnp
+import jax.random
 
 SIMULTANEOUS_PLAYER = -1
 TERMINAL_PLAYER = -2
@@ -67,6 +68,11 @@ class TensorGame:
     @property
     def num_actions(self) -> Tuple[int, int]:
         return (self.payoffs.shape[0], self.payoffs.shape[1])
+
+    def new_initial_state(self) -> "TensorState":
+        """Constructs the canonical initial state for the game."""
+
+        return TensorState(game=self)
 
 
 @dataclass(frozen=True)
@@ -161,6 +167,32 @@ def expected_payoff(game: TensorGame, player0_policy: jnp.ndarray, player1_polic
     return jnp.einsum("i,j,ijc->c", player0_policy, player1_policy, game.payoffs)
 
 
+def batched_expected_payoff(
+    game: TensorGame,
+    player0_policies: jnp.ndarray,
+    player1_policies: jnp.ndarray,
+) -> jnp.ndarray:
+    """Vectorized expected payoff computation for aligned policy batches."""
+
+    player0_policies = jnp.asarray(player0_policies, dtype=game.payoffs.dtype)
+    player1_policies = jnp.asarray(player1_policies, dtype=game.payoffs.dtype)
+
+    num_actions0, num_actions1 = game.num_actions
+
+    if player0_policies.shape[-1] != num_actions0:
+        raise ValueError(
+            "player0_policies must have last dimension matching the number of actions"
+        )
+    if player1_policies.shape[-1] != num_actions1:
+        raise ValueError(
+            "player1_policies must have last dimension matching the number of actions"
+        )
+    if player0_policies.shape[:-1] != player1_policies.shape[:-1]:
+        raise ValueError("policy batches must have matching leading dimensions")
+
+    return jnp.einsum("...i,...j,ijc->...c", player0_policies, player1_policies, game.payoffs)
+
+
 def joint_action_payoff(game: TensorGame, joint_action: jnp.ndarray) -> jnp.ndarray:
     """Returns payoffs for a pure joint action profile."""
 
@@ -215,6 +247,28 @@ def nash_conv(game: TensorGame, joint_policy: Tuple[jnp.ndarray, jnp.ndarray] | 
     return (br0_value - expected[0]) + (br1_value - expected[1])
 
 
+def sample_joint_action(
+    game: TensorGame,
+    rng_key: jax.Array,
+    player0_policy: jnp.ndarray,
+    player1_policy: jnp.ndarray,
+) -> jnp.ndarray:
+    """Samples a pure joint action profile from independent policies."""
+
+    player0_policy = jnp.asarray(player0_policy, dtype=game.payoffs.dtype)
+    player1_policy = jnp.asarray(player1_policy, dtype=game.payoffs.dtype)
+
+    num_actions0, num_actions1 = game.num_actions
+    _validate_policy(player0_policy, num_actions0, "player0_policy")
+    _validate_policy(player1_policy, num_actions1, "player1_policy")
+
+    key0, key1 = jax.random.split(rng_key)
+    action0 = jax.random.choice(key0, num_actions0, p=player0_policy.astype(jnp.float32))
+    action1 = jax.random.choice(key1, num_actions1, p=player1_policy.astype(jnp.float32))
+
+    return jnp.stack((action0, action1)).astype(jnp.int32)
+
+
 __all__ = [
     "SIMULTANEOUS_PLAYER",
     "TERMINAL_PLAYER",
@@ -223,7 +277,9 @@ __all__ = [
     "matching_pennies",
     "rock_paper_scissors",
     "expected_payoff",
+    "batched_expected_payoff",
     "joint_action_payoff",
     "best_response",
     "nash_conv",
+    "sample_joint_action",
 ]
