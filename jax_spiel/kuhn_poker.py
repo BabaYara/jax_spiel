@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Tuple
+from typing import Iterable, Tuple
 
 import jax
 import jax.numpy as jnp
@@ -12,6 +12,8 @@ from .tensor_game import TERMINAL_PLAYER
 
 
 _DECK = (0, 1, 2)
+_MAX_HISTORY_LENGTH = 3
+_NUM_ACTIONS = 2
 
 
 @dataclass(frozen=True)
@@ -122,6 +124,24 @@ class KuhnPokerState:
         returns = returns.at[winner].add(pot)
         return returns
 
+    def information_state_tensor(
+        self, player: int, *, dtype: jnp.dtype = jnp.float32
+    ) -> jnp.ndarray:
+        if player not in (0, 1):
+            raise ValueError("player must be 0 or 1")
+
+        player_encoding = jax.nn.one_hot(player, self.game.num_players, dtype=dtype)
+        card = self.player_cards[player]
+        card_encoding = jax.nn.one_hot(card, len(self.game.deck), dtype=dtype)
+        history_encoding = history_tensor_from_actions(self.history, dtype=dtype)
+
+        return jnp.concatenate((player_encoding, card_encoding, history_encoding))
+
+    def observation_tensor(
+        self, player: int, *, dtype: jnp.dtype = jnp.float32
+    ) -> jnp.ndarray:
+        return self.information_state_tensor(player, dtype=dtype)
+
     def _contributions(self, dtype) -> jnp.ndarray:
         contributions = [self.game.ante, self.game.ante]
         bet_size = self.game.bet_size
@@ -147,8 +167,40 @@ class KuhnPokerState:
         raise ValueError("Fold terminal state must contain a bet")
 
 
+def history_tensor_from_actions(
+    history: Iterable[int], *, dtype: jnp.dtype = jnp.float32
+) -> jnp.ndarray:
+    history_tuple = tuple(int(action) for action in history)
+    if len(history_tuple) > _MAX_HISTORY_LENGTH:
+        raise ValueError("history length exceeds maximum length for Kuhn Poker")
+    if any(action not in (0, 1) for action in history_tuple):
+        raise ValueError("history contains invalid actions")
+
+    history_array = jnp.array(history_tuple, dtype=jnp.int32)
+    return kuhn_history_to_tensor(history_array, dtype=dtype)
+
+
+def kuhn_history_to_tensor(
+    history: jnp.ndarray, *, dtype: jnp.dtype = jnp.float32
+) -> jnp.ndarray:
+    history = jnp.asarray(history, dtype=jnp.int32)
+
+    base = jnp.zeros((_MAX_HISTORY_LENGTH, _NUM_ACTIONS), dtype=dtype)
+    length = history.shape[0]
+
+    def _update(base_tensor):
+        indices = jnp.arange(length, dtype=jnp.int32)
+        updates = jax.nn.one_hot(history, _NUM_ACTIONS, dtype=dtype)
+        return base_tensor.at[indices].set(updates)
+
+    base = jax.lax.cond(length == 0, lambda t: t, _update, base)
+    return base.reshape(-1)
+
+
 __all__ = [
     "KuhnPokerGame",
     "KuhnPokerState",
+    "history_tensor_from_actions",
+    "kuhn_history_to_tensor",
 ]
 
