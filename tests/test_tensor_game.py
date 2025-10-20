@@ -72,6 +72,48 @@ def test_expected_payoff_is_jittable():
     assert jnp.allclose(payoff, tensor_game.expected_payoff(game, policies[0], policies[1]))
 
 
+def test_batched_expected_payoff_matches_scalar_path():
+    game = tensor_game.matching_pennies()
+    policies = jnp.array(
+        [
+            [[0.2, 0.8], [0.4, 0.6]],
+            [[0.5, 0.5], [0.9, 0.1]],
+        ]
+    )
+
+    batched = tensor_game.batched_expected_payoff(game, policies[:, 0], policies[:, 1])
+
+    manual = jnp.stack(
+        [
+            tensor_game.expected_payoff(game, policies[i, 0], policies[i, 1])
+            for i in range(policies.shape[0])
+        ],
+        axis=0,
+    )
+
+    assert batched.shape == manual.shape
+    assert jnp.allclose(batched, manual)
+
+
+def test_batched_expected_payoff_supports_vmap():
+    game = tensor_game.matching_pennies()
+    policies = jnp.array(
+        [
+            [[0.5, 0.5], [0.3, 0.7]],
+            [[0.1, 0.9], [0.6, 0.4]],
+            [[0.8, 0.2], [0.2, 0.8]],
+        ]
+    )
+
+    vmapped = jax.vmap(
+        lambda pair: tensor_game.expected_payoff(game, pair[0], pair[1])
+    )(policies)
+
+    batched = tensor_game.batched_expected_payoff(game, policies[:, 0], policies[:, 1])
+
+    assert jnp.allclose(vmapped, batched)
+
+
 def test_best_response_selects_maximizing_action():
     game = tensor_game.matching_pennies()
     opponent_policy = jnp.array([0.9, 0.1])
@@ -118,6 +160,15 @@ def test_nash_conv_is_jittable():
     conv = jit_fn(policies)
 
     assert jnp.isclose(conv, tensor_game.nash_conv(game, policies))
+
+
+def test_tensor_game_initial_state_factory():
+    game = tensor_game.matching_pennies()
+    state = game.new_initial_state()
+
+    assert isinstance(state, tensor_game.TensorState)
+    assert state.game is game
+    assert not state.is_terminal
 
 
 def test_tensor_game_metadata():
@@ -170,3 +221,18 @@ def test_rock_paper_scissors_uniform_strategy_is_equilibrium():
 
     conv = tensor_game.nash_conv(game, (uniform, uniform))
     assert jnp.isclose(conv, 0.0)
+
+
+def test_sample_joint_action_is_jittable():
+    game = tensor_game.matching_pennies()
+    policy = jnp.array([0.5, 0.5])
+
+    @jax.jit
+    def sample(key):
+        return tensor_game.sample_joint_action(game, key, policy, policy)
+
+    key = jax.random.key(0)
+    joint_action = sample(key)
+
+    assert joint_action.shape == (2,)
+    assert joint_action.dtype == jnp.int32
