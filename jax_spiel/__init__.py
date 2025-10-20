@@ -11,6 +11,7 @@ from .tensor_game import (
     nash_conv,
     matching_pennies,
 )
+from . import kuhn_poker
 
 __all__ = [
     "SIMULTANEOUS_PLAYER",
@@ -22,4 +23,5 @@ __all__ = [
     "joint_action_payoff",
     "nash_conv",
     "matching_pennies",
+    "kuhn_poker",
 ]
