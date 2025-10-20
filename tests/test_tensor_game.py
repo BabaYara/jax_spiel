@@ -129,3 +129,44 @@ def test_tensor_game_metadata():
 
     with pytest.raises(ValueError):
         tensor_game.expected_payoff(game, jnp.array([1.0, 0.0, 0.0]), jnp.array([1.0, 0.0]))
+
+
+def test_tensor_game_from_payoff_matrices_constructs_tensor():
+    player0 = jnp.array([[3.0, 0.0], [5.0, 1.0]])
+    player1 = jnp.array([[3.0, 5.0], [0.0, 1.0]])
+
+    game = tensor_game.TensorGame.from_payoff_matrices(
+        player0_payoffs=player0,
+        player1_payoffs=player1,
+        name="prisoners_dilemma",
+    )
+
+    assert game.name == "prisoners_dilemma"
+    assert game.payoffs.shape == (2, 2, 2)
+    assert jnp.array_equal(game.payoffs[..., 0], player0)
+    assert jnp.array_equal(game.payoffs[..., 1], player1)
+
+
+def test_tensor_game_from_payoff_matrices_validates_inputs():
+    player0 = jnp.array([[1.0, -1.0]])
+    player1 = jnp.array([[1.0], [-1.0]])
+
+    with pytest.raises(ValueError):
+        tensor_game.TensorGame.from_payoff_matrices(player0, player1)
+
+    with pytest.raises(ValueError):
+        tensor_game.TensorGame.from_payoff_matrices(jnp.array([1.0, -1.0]), jnp.array([1.0, -1.0]))
+
+
+def test_rock_paper_scissors_uniform_strategy_is_equilibrium():
+    game = tensor_game.rock_paper_scissors()
+    uniform = jnp.array([1 / 3, 1 / 3, 1 / 3])
+
+    payoff = tensor_game.expected_payoff(game, uniform, uniform)
+
+    assert game.num_actions == (3, 3)
+    assert game.name == "rock_paper_scissors"
+    assert jnp.allclose(payoff, jnp.array([0.0, 0.0]))
+
+    conv = tensor_game.nash_conv(game, (uniform, uniform))
+    assert jnp.isclose(conv, 0.0)

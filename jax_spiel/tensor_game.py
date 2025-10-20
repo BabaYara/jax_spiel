@@ -25,6 +25,41 @@ class TensorGame:
         if self.payoffs.shape[-1] != 2:
             raise ValueError("only two-player games are supported")
 
+    @classmethod
+    def from_payoff_matrices(
+        cls,
+        player0_payoffs,
+        player1_payoffs,
+        *,
+        name: str = "tensor_game",
+    ) -> "TensorGame":
+        """Constructs a ``TensorGame`` from separate payoff matrices.
+
+        Args:
+            player0_payoffs: Payoff matrix for player 0 with shape ``(A0, A1)``.
+            player1_payoffs: Payoff matrix for player 1 with shape ``(A0, A1)``.
+            name: Optional name for the resulting game.
+
+        Returns:
+            A ``TensorGame`` instance with the stacked payoff tensor.
+
+        Raises:
+            ValueError: If the payoff matrices are not rank-2 or have mismatched shapes.
+        """
+
+        player0_arr = jnp.asarray(player0_payoffs)
+        player1_arr = jnp.asarray(player1_payoffs)
+
+        if player0_arr.ndim != 2 or player1_arr.ndim != 2:
+            raise ValueError("payoff matrices must both be rank-2 tensors")
+        if player0_arr.shape != player1_arr.shape:
+            raise ValueError(
+                "player0_payoffs and player1_payoffs must have matching shapes"
+            )
+
+        payoffs = jnp.stack((player0_arr, player1_arr), axis=-1)
+        return cls(name=name, payoffs=payoffs)
+
     @property
     def num_players(self) -> int:
         return self.payoffs.shape[-1]
@@ -91,6 +126,24 @@ def matching_pennies() -> TensorGame:
         ]
     )
     return TensorGame(name="matching_pennies", payoffs=payoffs)
+
+
+def rock_paper_scissors() -> TensorGame:
+    """Creates the Rock-Paper-Scissors zero-sum game."""
+
+    player0_payoffs = jnp.array(
+        [
+            [0.0, -1.0, 1.0],
+            [1.0, 0.0, -1.0],
+            [-1.0, 1.0, 0.0],
+        ]
+    )
+    player1_payoffs = -player0_payoffs
+    return TensorGame.from_payoff_matrices(
+        player0_payoffs=player0_payoffs,
+        player1_payoffs=player1_payoffs,
+        name="rock_paper_scissors",
+    )
 
 
 def _validate_policy(policy: jnp.ndarray, num_actions: int, label: str) -> None:
@@ -168,6 +221,7 @@ __all__ = [
     "TensorGame",
     "TensorState",
     "matching_pennies",
+    "rock_paper_scissors",
     "expected_payoff",
     "joint_action_payoff",
     "best_response",
