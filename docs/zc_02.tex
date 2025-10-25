@@ -1,0 +1,29 @@
+\documentclass{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{enumitem}
+\usepackage{hyperref}
+
+\title{TensorGame and TensorState Overview}
+\author{JAX Spiel Team}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{TensorGame Roadmap}
+The TensorGame abstraction follows the global milestones outlined in the JAX Spiel conversion plan. Each milestone informs how we
+stabilize immutable game definitions, ensure batched utilities, and progressively extend to richer gameplay scenarios.
+\input{zc02/milestones.tex}
+
+\section{TensorState Integration Milestones}
+TensorState development mirrors the same milestones with a focus on state evolution. Core API work guarantees that tensor-backed
+state transitions remain pure and differentiable. Example game implementations validate that TensorState snapshots capture all
+player information. Policy and value function milestones bind TensorState with evaluators, while benchmarking commitments ensure
+state rollouts remain reliable under pytest parity with OpenSpiel.
+
+\section{Documentation Alignment}
+This document is automatically synchronized with the strategic plan. Run
+\texttt{python docs/zc02/generate\_milestones.py} whenever \texttt{docs/plan.md} changes to refresh the milestone summary before
+building the PDF with \texttt{latexmk -pdf docs/zc\_02.tex}.
+
+\end{document}

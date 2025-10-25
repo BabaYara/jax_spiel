@@ -1,0 +1,22 @@
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Core API Skeleton}
+    \begin{itemize}[leftmargin=*]
+      \item Define JAX-compatible \texttt{Game} and \texttt{State} abstractions with immutable dataclasses.
+      \item Provide utilities for batched operations and JIT compilation.
+    \end{itemize}
+  \item \textbf{Example Game Implementations}
+    \begin{itemize}[leftmargin=*]
+      \item Port simple matrix game (e.g., Matching Pennies) as functional JAX code.
+      \item Extend to sequential games (e.g., Kuhn Poker) using pure functions.
+    \end{itemize}
+  \item \textbf{Policy \\& Value Functions}
+    \begin{itemize}[leftmargin=*]
+      \item Implement policy evaluation using JAX transformations (jit, vmap).
+      \item Provide example RL algorithms (policy gradients).
+    \end{itemize}
+  \item \textbf{Benchmarking \\& Testing}
+    \begin{itemize}[leftmargin=*]
+      \item Mirror selected OpenSpiel tests using pytest + JAX.
+      \item Add performance benchmarks.
+    \end{itemize}
+\end{enumerate}
