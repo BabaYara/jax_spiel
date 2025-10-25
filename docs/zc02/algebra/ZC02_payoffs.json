@@ -1,0 +1,28 @@
+{
+  "parameters": {
+    "p_top": "p",
+    "q_left": "q"
+  },
+  "row_payoffs": {
+    "top_left": "r_tl",
+    "top_right": "r_tr",
+    "bottom_left": "r_bl",
+    "bottom_right": "r_br"
+  },
+  "column_payoffs": {
+    "top_left": "c_tl",
+    "top_right": "c_tr",
+    "bottom_left": "c_bl",
+    "bottom_right": "c_br"
+  },
+  "u_row": {
+    "expanded": "- p q r_{bl} + p q r_{br} + p q r_{tl} - p q r_{tr} - p r_{br} + p r_{tr} + q r_{bl} - q r_{br} + r_{br}",
+    "factored": "- p q \\left(r_{bl} - r_{br} - r_{tl} + r_{tr}\\right) - p \\left(r_{br} - r_{tr}\\right) - q \\left(- r_{bl} + r_{br}\\right) + r_{br}",
+    "symbolic": "-p*q*r_bl + p*q*r_br + p*q*r_tl - p*q*r_tr - p*r_br + p*r_tr + q*r_bl - q*r_br + r_br"
+  },
+  "u_col": {
+    "expanded": "- c_{bl} p q + c_{bl} q + c_{br} p q - c_{br} p - c_{br} q + c_{br} + c_{tl} p q - c_{tr} p q + c_{tr} p",
+    "factored": "c_{br} - p q \\left(c_{bl} - c_{br} - c_{tl} + c_{tr}\\right) - p \\left(c_{br} - c_{tr}\\right) - q \\left(- c_{bl} + c_{br}\\right)",
+    "symbolic": "-c_bl*p*q + c_bl*q + c_br*p*q - c_br*p - c_br*q + c_br + c_tl*p*q - c_tr*p*q + c_tr*p"
+  }
+}

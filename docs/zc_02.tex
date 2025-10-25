@@ -2,6 +2,7 @@
 \usepackage[margin=1in]{geometry}
 \usepackage{enumitem}
 \usepackage{hyperref}
+\usepackage{pythontex}
 
 \title{TensorGame and TensorState Overview}
 \author{JAX Spiel Team}
@@ -10,10 +11,41 @@
 \begin{document}
 \maketitle
 
+\begin{pycode}
+import json
+from pathlib import Path
+
+json_path = Path("zc02/algebra/ZC02_payoffs.json")
+with json_path.open() as f:
+    payoff_data = json.load(f)
+
+u_row_expanded = payoff_data["u_row"]["expanded"]
+u_col_expanded = payoff_data["u_col"]["expanded"]
+u_row_factored = payoff_data["u_row"]["factored"]
+u_col_factored = payoff_data["u_col"]["factored"]
+\end{pycode}
+
 \section{TensorGame Roadmap}
 The TensorGame abstraction follows the global milestones outlined in the JAX Spiel conversion plan. Each milestone informs how we
 stabilize immutable game definitions, ensure batched utilities, and progressively extend to richer gameplay scenarios.
 \input{zc02/milestones.tex}
+
+\section{Algebraic Payoff Summary}
+Mixed strategies assign the row player a top-action probability $p$ and the column player a left-action probability $q$. Given row
+payoff symbols $r_{ij}$ and column payoff symbols $c_{ij}$, the expected utilities derived in
+\texttt{docs/zc02/algebra/ZC02\_payoffs.ipynb} are synchronized below via PythonTeX.
+
+\subsection{Expanded forms}
+\begin{align*}
+u_{\text{row}} &= \py{u_row_expanded},\\
+u_{\text{col}} &= \py{u_col_expanded}.
+\end{align*}
+
+\subsection{Factored forms}
+\begin{align*}
+u_{\text{row}} &= \py{u_row_factored},\\
+u_{\text{col}} &= \py{u_col_factored}.
+\end{align*}
 
 \section{TensorState Integration Milestones}
 TensorState development mirrors the same milestones with a focus on state evolution. Core API work guarantees that tensor-backed
