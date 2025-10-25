@@ -53,6 +53,35 @@ state transitions remain pure and differentiable. Example game implementations v
 player information. Policy and value function milestones bind TensorState with evaluators, while benchmarking commitments ensure
 state rollouts remain reliable under pytest parity with OpenSpiel.
 
+\section{Policy Evaluation Trajectory}
+Milestone 3 of the conversion plan emphasizes policy evaluation through differentiable objectives. We evaluate the policy parameters $\theta$ using the inline objective
+\begin{equation*}
+  J(\theta) = \mathbb{E}_{s \sim d^{\pi_\theta},\, a \sim \pi_\theta}\bigl[r(s, a)\bigr],
+\end{equation*}
+where $d^{\pi_\theta}$ is the stationary distribution induced by \(\pi_\theta\). The gradient-based update therefore respects JAX transformations via
+\begin{equation*}
+  \nabla_\theta J(\theta) = \mathbb{E}_{s, a}\bigl[\nabla_\theta \log \pi_\theta(a \mid s)\, r(s, a)\bigr],
+\end{equation*}
+pinning the policy learning narrative directly to plan milestone 3.
+
+\section{Value Function Coupling}
+The same milestone mandates value propagation that complements policy gradients. We track state values through
+\begin{equation*}
+  v^{\pi}(s) = \sum_a \pi(a \mid s) q^{\pi}(s, a),
+\end{equation*}
+and relate action values to temporal rollouts by
+\begin{equation*}
+  q^{\pi}(s, a) = r(s, a) + \gamma \sum_{s'} P(s' \mid s, a) v^{\pi}(s').
+\end{equation*}
+These expressions align the TensorState snapshots with differentiable evaluators that can be vmapped or jitted for batched computation.
+
+\begin{figure}[t]
+  \centering
+  \input{zc02/figures/policy_value_alignment.tex}
+  \caption{Milestone 3 policy/value alignment between the conversion plan and TensorState objectives.}
+  \label{fig:policy-value-alignment}
+\end{figure}
+
 \section{Documentation Alignment}
 This document is automatically synchronized with the strategic plan. Run
 \texttt{python docs/zc02/generate\_milestones.py} whenever \texttt{docs/plan.md} changes to refresh the milestone summary before
