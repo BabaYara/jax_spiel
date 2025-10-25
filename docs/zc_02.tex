@@ -64,6 +64,8 @@ where $d^{\pi_\theta}$ is the stationary distribution induced by \(\pi_\theta\).
 \end{equation*}
 pinning the policy learning narrative directly to plan milestone 3.
 
+Figure~\ref{fig:policy-value-alignment} condenses these statements alongside the TensorState transition law $s' = f(s, a)$. The inline presentation keeps the critique-mandated equations visible so that reviewers can verify each milestone's mathematical anchor without chasing external appendices.
+
 \section{Value Function Coupling}
 The same milestone mandates value propagation that complements policy gradients. We track state values through
 \begin{equation*}
@@ -78,13 +80,14 @@ These expressions align the TensorState snapshots with differentiable evaluators
 \begin{figure}[t]
   \centering
   \input{zc02/figures/policy_value_alignment.tex}
-  \caption{Milestone 3 policy/value alignment between the conversion plan and TensorState objectives.}
+  \caption{Policy/value alignment between milestone 3 objectives and the inline mathematical statements that drive the critique response.}
   \label{fig:policy-value-alignment}
 \end{figure}
 
 \section{Documentation Alignment}
 This document is automatically synchronized with the strategic plan. Run
-\texttt{python docs/zc02/generate\_milestones.py} whenever \texttt{docs/plan.md} changes to refresh the milestone summary before
+\texttt{python docs/zc02/generate\_milestones.py} whenever \texttt{docs/plan.md} changes to refresh the milestone summary, and run
+\texttt{python docs/zc02/figures/policy\_value\_alignment.py} to rebuild the inline figure before
 building the PDF with \texttt{latexmk -pdf docs/zc\_02.tex}.
 
 \end{document}
